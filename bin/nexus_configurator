@@ -7,8 +7,7 @@ import os
 import os.path
 import sys
 import yaml
-from nexus_configurator.nexus import Nexus, NexusUnauthorised,
-NexusConnectionError
+from nexus_configurator.nexus import Nexus, NexusUnauthorised, NexusConnectionError
 
 ADMIN_USER = "admin"
 

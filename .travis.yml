@@ -19,4 +19,5 @@ deploy:
   provider: script
   script: ./.travis/docker-push.sh
   on:
+    tags: true
     branch: master
