@@ -1,0 +1,22 @@
+language: python
+python:
+- '3.6'
+sudo: required
+services:
+- docker
+env:
+  global:
+  - REGISTRY_USER=ocadotechnologygitlab
+  - VCS_SOURCE="https://github.com/${TRAVIS_REPO_SLUG}"
+  - secure: "KOEncoUStcCmiKviTz/u8KsiI5/+namjIZmkMsb2waYui1GyR+jeax0tmvKsKfDl8o3kxOFPbkHvXDpx8OlkAmB6QOWzciJjmWJsg0XDguafaQ3o0oZzPXekuJdIwm5m/fGRcdVHzdtDZawYMF+5uNegaiIUvIs9134njsuKMaK/WAOYLiMMMNWbjh0su8Zf57VBd++JrR8R33NTwp5WKrzhledGeSzMgir7xHb1N42/M/uw7PYOWGOigZaHMLBqCZ0q5w36hvUKTr+T6xqmiGCh5zCEARu7gHMLHpSvUuTGUUjX0clV/6R9pLdt43S5LVdX80pnw8viDgxxB3/zkQpYMp8osNYxFY7wpcUlRwoL4aLhKL5Zlc4cbn8EwQ+lZQGhGw6sAfV+p6pY5XxMREvReQEQxfu5aMXeq493ZFfzVvfZotkPvO9eFmsiyP67wQHDBE4XsVTWf2za84kmXhrB6MfxPSd2f10FM5TJgBcfJZ833lkJtEHHclYWdtVrUsVtDJf8tviCeAkQwkOvFJL8BGOVPyg7EUKpmKmGgeK0yyUDCUfjHFQNu7nk+NuxBU4W6j80TlT/lw7hw4j0tlMcWc5HbsI4P4jw0RQYrYrIRhPBgRmhS/c73+m9aORAfrduVsJ6HQyMfxV6rP6amPY++ZoF/8hTRYrKvqsCU1U="
+script:
+- ./build.sh
+- python setup.py test
+- ./.travis/docker-build.sh
+after_script:
+- docker images
+deploy:
+  provider: script
+  script: ./.travis/docker-push.sh
+  on:
+    branch: master
