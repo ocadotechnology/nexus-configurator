@@ -1,0 +1,6 @@
+nexus3-*/
+groovy
+groovy/
+__pycache__
+*.egg-info/
+*.pyc

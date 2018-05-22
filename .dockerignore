@@ -1,0 +1,7 @@
+.git
+*.pyc
+__pycache__
+*.egg-info
+.gitlab-ci.*
+.gitignore
+build.sh
