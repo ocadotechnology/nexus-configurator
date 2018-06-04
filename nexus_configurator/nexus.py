@@ -79,14 +79,12 @@ class Nexus(object):
         return self.requests.put(url, data=data, headers=headers, timeout=3)
 
     def _get(self, endpoint):
-        url = "{}/{}/{}".format(self.host, self.api_prefix,
-                                endpoint, timeout=3)
-        return self.requests.get(url)
+        url = "{}/{}/{}".format(self.host, self.api_prefix, endpoint)
+        return self.requests.get(url, timeout=3)
 
     def _delete(self, endpoint):
-        url = "{}/{}/{}".format(self.host, self.api_prefix,
-                                endpoint, timeout=3)
-        return self.requests.delete(url)
+        url = "{}/{}/{}".format(self.host, self.api_prefix, endpoint)
+        return self.requests.delete(url, timeout=3)
 
     def delete_script(self, name):
         return self._delete("script/{}".format(name))
