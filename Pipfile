@@ -10,6 +10,9 @@ pyyaml = "*"
 "jinja2" = "*"
 
 [dev-packages]
+pytest = "*"
+pylama = "*"
+httpretty = "*"
 
 [requires]
 python_version = "3.6"
