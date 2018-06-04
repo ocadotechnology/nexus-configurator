@@ -10,6 +10,7 @@ setup(
     'requests',
     'pyyaml',
     'jinja2',
+    'boto3'
   ],
   packages=['nexus_configurator'],
   entry_points={

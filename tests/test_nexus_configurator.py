@@ -1,7 +1,12 @@
+import base64
 from pkg_resources import resource_filename
 import sys
 from unittest import mock
 from unittest.mock import patch
+
+import boto3
+import httpretty
+from moto import mock_s3
 
 from nexus_configurator.nexus import NexusUnauthorised
 import nexus_configurator.nexus_configurator as nexus_configurator
@@ -43,3 +48,42 @@ def test_nexus_auth_tries_each_password_until_successful(nexus):
         nexus.assert_any_call(host='http://localhost:8081',
                               password=p,
                               user='admin')
+
+
+@mock_s3
+def test_read_config_file_from_s3():
+    bucket_name = 'config_bucket'
+    s3_key = 'configfilename'
+
+    s3_client = boto3.client('s3')
+    s3_client.create_bucket(Bucket=bucket_name)
+    with open(SAMPLE_CONFIG_PATH) as f:
+        body = f.read()
+
+    s3_client.put_object(Bucket=bucket_name, Key=s3_key, Body=body)
+
+    s3_url = 's3://' + bucket_name + '/' + s3_key
+    config = nexus_configurator.read_config_file(s3_url)
+    assert(config == SAMPLE_CONFIG)
+
+
+def test_read_config_file_from_disk():
+    config_file_path = SAMPLE_CONFIG_PATH
+    config = nexus_configurator.read_config_file(config_file_path)
+    assert(config == SAMPLE_CONFIG)
+
+
+@httpretty.activate
+def test_read_config_file_from_http_with_auth():
+    config_url = 'http://someuser:somepass@configserver.bar/config'
+    with open(SAMPLE_CONFIG_PATH) as f:
+        body = f.read()
+    httpretty.register_uri(
+        httpretty.GET,
+        config_url,
+        body=body
+    )
+    config = nexus_configurator.read_config_file(config_url)
+    assert(httpretty.last_request().headers['Authorization'] ==
+           'Basic ' + base64.b64encode(b'someuser:somepass').decode())
+    assert(config == SAMPLE_CONFIG)
