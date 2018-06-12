@@ -1,15 +1,23 @@
 #!/usr/bin/env python3
 import argparse
 import glob
+import io
 import jinja2
-import json
 import os
 import os.path
+from pkg_resources import resource_filename
 import sys
+import urllib
+import traceback
+
+import boto3
+import requests
 import yaml
-from nexus_configurator.nexus import Nexus, NexusUnauthorised, NexusConnectionError
+from nexus_configurator.nexus import Nexus, NexusUnauthorised
+from nexus_configurator.nexus import NexusConnectionError
 
 ADMIN_USER = "admin"
+GROOVY_SCRIPTS_DIR = resource_filename("nexus_configurator", "groovy")
 
 
 class EnvDefault(argparse.Action):
@@ -39,56 +47,100 @@ def parse_args():
         formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("--host",
                         help="base url where Nexus is available",
-                        default="http://localhost:8081", action=EnvDefault,
+                        default="http://localhost:8081",
+                        action=EnvDefault,
                         envvar='NEXUS_HOST')
     parser.add_argument("-p", "--password",
                         help="password for user 'admin'",
-                        default="admin123", action=EnvDefault,
+                        default="admin123",
+                        action=EnvDefault,
                         envvar="NEXUS_ADMIN_PASSWORD")
     parser.add_argument("-c", "--credential_file",
                         help="file containing password for user 'admin'",
-                        action=EnvDefault, envvar="NEXUS_CREDENTIAL_FILE",
+                        action=EnvDefault,
+                        envvar="NEXUS_CREDENTIAL_FILE",
                         required=False)
     parser.add_argument("-g", "--groovy_dir",
                         help="directory containing groovy scripts to upload",
-                        default="groovy", action=EnvDefault,
+                        default=GROOVY_SCRIPTS_DIR,
+                        action=EnvDefault,
                         envvar="NEXUS_GROOVY_DIR")
     parser.add_argument("--config",
                         help="yaml configuration file path",
-                        action=EnvDefault, envvar="NEXUS_CONFIG_FILE")
+                        action=EnvDefault,
+                        envvar="NEXUS_CONFIG_FILE",
+                        required=True)
     return parser.parse_args()
 
 
-def main():
-    args = parse_args()
-    print("Starting")
-    if not args.config:
-        fatal("No config file specified")
-    passwords = [args.password]
-    if args.credential_file is not None:
+def get_passwords(passwd, passwd_file_url):
+    passwords = [passwd]
+    if passwd_file_url is not None:
         try:
-            with open(args.credential_file, "r") as credfile:
-                for cred in credfile:
-                    passwords.append(cred.strip())
+            for cred in get_file_contents(passwd_file_url).splitlines():
+                passwords.append(cred.strip())
         except FileNotFoundError:
-            print("No credential file found at {}. Ignoring".format(args.credential_file))  # noqa
-    nx = nexus_client(host=args.host, password_list=passwords)
-    if not nx:
-        fatal("No valid Nexus client")
-    scripts_glob_path = os.path.join(args.groovy_dir, "*.groovy")
+            print("No credential file found at {}. ".format(passwd_file_url)
+                  + "Ignoring")
+    return passwords
+
+
+def upload_groovy_scripts_to_nexus(groovy_dir, nexus):
+    scripts_glob_path = os.path.join(groovy_dir, "*.groovy")
     scripts = glob.glob(scripts_glob_path)
     if len(scripts) == 0:
         fatal("No groovy scripts found at {}".format(scripts_glob_path))
     for script in scripts:
         print("Uploading {} to Nexus".format(script))
-        nx.create_script(script)
+        nexus.create_script(script)
+
+
+def get_file_contents(url):
+    parsed_url = urllib.parse.urlparse(url)
+    if parsed_url.scheme == '':
+        return get_disk_file_contents(url)
+    elif parsed_url.scheme == 's3':
+        return get_s3_file_contents(url)
+    else:
+        return requests.get(url).text
+
+
+def get_s3_file_contents(url):
+    parsed_url = urllib.parse.urlparse(url)
+    s3 = boto3.client('s3')
+    buf = io.BytesIO()
+    s3.download_fileobj(parsed_url.netloc, parsed_url.path[1:], buf)
+    buf.seek(0)
+    return io.TextIOWrapper(buf).read()
+
+
+def get_disk_file_contents(url):
+    with open(url, "r") as configfile:
+        config_contents = configfile.read()
+    return config_contents
+
+
+def read_config_file(config_url):
     try:
-        with open(args.config, "r") as configfile:
-            config = process_config(configfile, os.environ)
+        return process_config(get_file_contents(config_url), os.environ)
     except FileNotFoundError:
-        fatal("No config file found at {}".format(args.config))
+        fatal("No config file found at {}".format(config_url))
     except yaml.YAMLError:
-        fatal("Failure to parse yaml file found at {}".format(args.config))
+        fatal("Failure to parse yaml file found at {}".format(config_url))
+
+
+def main():
+    args = parse_args()
+    print("Starting")
+    passwords = get_passwords(args.password, args.credential_file)
+    print("Creating nexus client...")
+    nx = nexus_client(host=args.host, password_list=passwords)
+    if not nx:
+        fatal("No valid Nexus client")
+    print("Uploading scripts...")
+    upload_groovy_scripts_to_nexus(args.groovy_dir, nx)
+    print("Done.")
+    config = read_config_file(args.config)
     for config_step in config:
         for script_type, resources in config_step.items():
             for resource in resources:
@@ -100,7 +152,7 @@ def main():
                     print("{} result: {}".format(script_type, resp.text))
 
 
-def process_config(file_handle, env=None):
+def process_config(config_text, env=None):
     """
     Attempt to safe load a yaml file, rendering with jinja2.
 
@@ -109,7 +161,7 @@ def process_config(file_handle, env=None):
         {{env['FOO']}}
     """
     env = env or None
-    config = jinja2.Template(file_handle.read()).render(env=env)
+    config = jinja2.Template(config_text).render(env=env)
     return yaml.safe_load(config)
 
 
@@ -122,6 +174,7 @@ def nexus_client(host, user=ADMIN_USER, password_list=None):
 
     if None returned, all of the provided credentials were invalid.
     """
+
     password_list = password_list or []
     for password in password_list:
         try:
@@ -129,12 +182,15 @@ def nexus_client(host, user=ADMIN_USER, password_list=None):
         except NexusUnauthorised:
             print("Credential attempted and was rejected")
         except NexusConnectionError:
-            print("Connection attempted to {} but failed multiple times".format(host))  # noqa
+            print("Connection attempted to {} but ".format(host)
+                  + "failed multiple times.")
+            traceback.print_exc()
 
 
 def fatal(msg):
     print(msg)
     sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

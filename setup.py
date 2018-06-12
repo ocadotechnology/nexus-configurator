@@ -1,5 +1,4 @@
 from setuptools import setup
-import glob
 
 setup(
   name='nexus_configurator',
@@ -8,11 +7,16 @@ setup(
   url='https://github.com/ocadotechnology/nexus-configurator',
   author='Tuskens, stuart-warren',
   install_requires=[
-      'requests',
-      'pyyaml',
-      'jinja2',
+    'requests',
+    'pyyaml',
+    'jinja2',
+    'boto3'
   ],
   packages=['nexus_configurator'],
-  scripts=['bin/nexus_configurator'],
-  data_files=[('groovy', glob.glob('groovy/*.groovy'))]
+  entry_points={
+    'console_scripts': [
+      'nexus_configurator=nexus_configurator.nexus_configurator:main',
+    ],
+  },
+  package_data={'nexus_configurator': ['groovy/*.groovy']}
 )

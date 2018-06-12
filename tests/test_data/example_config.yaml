@@ -1,0 +1,3 @@
+---
+- setup_anonymous_access:
+    - anonymous_access: true

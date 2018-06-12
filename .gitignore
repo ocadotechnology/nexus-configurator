@@ -4,4 +4,4 @@ groovy/
 __pycache__
 *.egg-info/
 *.pyc
-.eggs/
+.*

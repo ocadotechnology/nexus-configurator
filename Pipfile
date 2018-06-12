@@ -8,8 +8,13 @@ requests = "*"
 pyyaml = "*"
 "e1839a8" = {path = ".", editable = true}
 "jinja2" = "*"
+"boto3" = "*"
 
 [dev-packages]
+pytest = "*"
+pylama = "*"
+moto = "*"
+httpretty = "*"
 
 [requires]
 python_version = "3.6"
