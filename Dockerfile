@@ -10,6 +10,7 @@ FROM python:3.6-slim
 COPY . /app
 WORKDIR /app
 COPY --from=0 /tmp/nexus_configurator/groovy /app/nexus_configurator/groovy
-RUN pip install .
+RUN pip install pipenv && \
+    pipenv install --system --deploy
 USER nobody
 ENTRYPOINT ["nexus_configurator"]
