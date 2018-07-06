@@ -5,11 +5,13 @@ import jinja2
 import json
 import os
 import os.path
+from pkg_resources import resource_filename
 import sys
 import yaml
 from nexus_configurator.nexus import Nexus, NexusUnauthorised, NexusConnectionError
 
 ADMIN_USER = "admin"
+GROOVY_SCRIPTS_DIR = resource_filename("nexus_configurator", "groovy")
 
 
 class EnvDefault(argparse.Action):
@@ -51,7 +53,7 @@ def parse_args():
                         required=False)
     parser.add_argument("-g", "--groovy_dir",
                         help="directory containing groovy scripts to upload",
-                        default="groovy", action=EnvDefault,
+                        default=GROOVY_SCRIPTS_DIR, action=EnvDefault,
                         envvar="NEXUS_GROOVY_DIR")
     parser.add_argument("--config",
                         help="yaml configuration file path",

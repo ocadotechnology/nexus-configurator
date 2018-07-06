@@ -1,5 +1,4 @@
 from setuptools import setup
-import glob
 
 setup(
   name='nexus_configurator',
@@ -14,5 +13,5 @@ setup(
   ],
   packages=['nexus_configurator'],
   scripts=['bin/nexus_configurator'],
-  data_files=[('groovy', glob.glob('groovy/*.groovy'))]
+  package_data={'nexus_configurator': ['groovy/*.groovy']}
 )
