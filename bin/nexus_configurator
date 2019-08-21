@@ -8,8 +8,9 @@ import os.path
 from pkg_resources import resource_filename
 import sys
 import yaml
+import logging
 from nexus_configurator.nexus import Nexus, NexusUnauthorised, NexusConnectionError
-
+logging.basicConfig(level=logging.DEBUG)
 ADMIN_USER = "admin"
 GROOVY_SCRIPTS_DIR = resource_filename("nexus_configurator", "groovy")
 
@@ -93,8 +94,16 @@ def main():
         fatal("Failure to parse yaml file found at {}".format(args.config))
     for config_step in config:
         for script_type, resources in config_step.items():
-            for resource in resources:
-                resp = nx.run_script(script_type, **resource)
+            if "list" in script_type:
+                resp = nx.run_script_multi(script_type,resources)
+                if len(resp.text) > 0 and 'result' in resp.json():
+                    result = resp.json()['result']
+                    print("{} result: {}".format(script_type, result))
+                else:
+                    print("{} result: {}".format(script_type, resp.text))
+            else:
+                for resource in resources:
+                    resp = nx.run_script(script_type, **resource)
                 if len(resp.text) > 0 and 'result' in resp.json():
                     result = resp.json()['result']
                     print("{} result: {}".format(script_type, result))

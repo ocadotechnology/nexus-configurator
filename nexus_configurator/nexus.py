@@ -111,6 +111,9 @@ class Nexus(object):
     def run_script(self, script, **kwargs):
         run_url = "script/{}/run".format(script)
         return self._post(run_url, kwargs, content_type="text/plain")
+    def run_script_multi(self, script,arg):
+      run_url = "script/{}/run".format(script)
+      return self._post(run_url, arg, content_type="text/plain")
 
     @property
     def scripts(self):
