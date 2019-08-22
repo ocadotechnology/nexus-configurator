@@ -95,7 +95,7 @@ def main():
     for config_step in config:
         for script_type, resources in config_step.items():
             if "list" in script_type:
-                resp = nx.run_script_multi(script_type,resources)
+                resp = nx.run_script_multi(script_type, resources)
                 if len(resp.text) > 0 and 'result' in resp.json():
                     result = resp.json()['result']
                     print("{} result: {}".format(script_type, result))
