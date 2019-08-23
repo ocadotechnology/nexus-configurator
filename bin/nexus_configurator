@@ -10,7 +10,7 @@ import sys
 import yaml
 import logging
 from nexus_configurator.nexus import Nexus, NexusUnauthorised, NexusConnectionError
-logging.basicConfig(level=logging.DEBUG)
+
 ADMIN_USER = "admin"
 GROOVY_SCRIPTS_DIR = resource_filename("nexus_configurator", "groovy")
 
@@ -59,8 +59,15 @@ def parse_args():
     parser.add_argument("--config",
                         help="yaml configuration file path",
                         action=EnvDefault, envvar="NEXUS_CONFIG_FILE")
+
     return parser.parse_args()
 
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+
+numeric_level = getattr(logging, LOG_LEVEL.upper(), None)
+if not isinstance(numeric_level, int):
+    raise ValueError('Invalid LOG_LEVEL: %s' % LOG_LEVEL)
+logging.basicConfig(level=numeric_level)
 
 def main():
     args = parse_args()
@@ -94,7 +101,7 @@ def main():
         fatal("Failure to parse yaml file found at {}".format(args.config))
     for config_step in config:
         for script_type, resources in config_step.items():
-            if "list" in script_type:
+            if "_from_list" in script_type:
                 resp = nx.run_script_multi(script_type, resources)
                 if len(resp.text) > 0 and 'result' in resp.json():
                     result = resp.json()['result']

@@ -137,7 +137,6 @@
       - maven-central
       - gradle-plugins
       - jcenter
-      - maven-ocado-com
   - name: maven-snapshot-group
     type: group
     format: maven2
@@ -147,7 +146,6 @@
       - maven-central
       - gradle-plugins
       - jcenter
-      - maven-ocado-com
   - name: dockerruns
     format: raw
     type: hosted
@@ -277,3 +275,21 @@
       - pypi-rw
       - npm-rw
       - maven-rw
+- setup_users_from_list:
+  - username: pypirw
+    first_name: Pypi
+    last_name: readWrite
+    password: "{{ env['NEXUS_PYPIRW_PASSWORD']|default('pypirw') }}"
+    email: pypirw@example.org
+    roles:
+    - pypi-rw
+  - username: multiroleaccess
+    first_name: multirole
+    last_name: access
+    password: "{{ env['NEXUS_MULTIROLEACCESS_PASSWORD']|default('multiroleaccess') }}"
+    email: multiroleaccess@example.org
+    roles:
+    - pypi-rw
+    - NexusUsersRO
+    - maven-rw
+
