@@ -1,7 +1,7 @@
 ---
 - setup_anonymous_access:
     - anonymous_access: true
-- create_blobstore:
+- create_blobstores_from_list:
     - name: default
       path: default
     - name: internal
@@ -34,222 +34,262 @@
       path: dockerruns
     - name: lambdas
       path: lambdas
-- create_repo_docker_hosted:
-    - name: internal
-      http_port: 8090
-      v1_enabled: false
-      write_policy: allow
-      blob_store: internal
-      strict_content_validation: true
-    - name: releases
-      http_port: 8094
-      v1_enabled: false
-      write_policy: allow_once
-      blob_store: releases
-      strict_content_validation: true
-- create_repo_pypi_hosted:
-    - name: pypi-internal
-      write_policy: allow_once
-      blob_store: pypi-internal
-      strict_content_validation: true
-- create_repo_pypi_proxy:
-    - name: pypi-central
-      remote_url: https://pypi.python.org/
-      blob_store: pypi-upstream
-- create_repo_npm_hosted:
-    - name: npm-releases
-      write_policy: allow_once
-      blob_store: npm-releases
-      strict_content_validation: true
-- create_repo_npm_proxy:
-    - name: npm-central
-      remote_url: https://registry.npm.org
-      blob_store: npm-upstream
-- create_repo_maven_hosted:
-    - name: maven-snapshots
-      write_policy: allow
-      version_policy: snapshot
-      layout_policy: strict
-      blob_store: default
-      strict_content_validation: true
-    - name: maven-releases
-      write_policy: allow_once
-      version_policy: release
-      layout_policy: strict
-      blob_store: default
-      strict_content_validation: true
-- create_repo_maven_proxy:
-    - name: maven-central
-      blob_store: default
-      version_policy: release
-      layout_policy: strict
-      remote_url: https://repo1.maven.org/maven2/
-    - name: gradle-plugins
-      blob_store: default
-      version_policy: release
-      layout_policy: strict
-      remote_url: https://plugins.gradle.org/m2/
-    - name: jcenter
-      blob_store: default
-      version_policy: release
-      layout_policy: strict
-      remote_url: https://jcenter.bintray.com/
-- create_repo_pypi_group:
-    - name: pypi
-      blob_store: pypi-group
-      member_repos:
-        - pypi-upstream
-        - pypi-internal
-        - pypi-central
-      strict_content_validation: true
-- create_repo_npm_group:
-    - name: npm-group
-      blob_store: npm-group
-      member_repos:
-        - npm-upstream
-        - npm-releases
-        - npm-central
-      strict_content_validation: true
-- create_repo_maven_group:
-    - name: maven-release-group
-      blob_store: maven-release
-      member_repos:
-        - maven-releases
-        - maven-central
-        - gradle-plugins
-        - jcenter
-        - maven-ocado-com
-    - name: maven-snapshot-group
-      blob_store: maven-snapshot-group
-      member_repos:
-        - maven-snapshots
-        - maven-central
-        - gradle-plugins
-        - jcenter
-        - maven-ocado-com
-- create_repo_raw_hosted:
-    - name: dockerruns
-      write_policy: allow_once
-      blob_store: dockerruns
-      strict_content_validation: false
-    - name: lambdas
-      write_policy: allow_once
-      blob_store: lambdas
-      strict_content_validation: false
+- create_repos_from_list:
+  - name: internal
+    type: hosted
+    format: docker
+    http_port: 8090
+    v1_enabled: false
+    write_policy: allow
+    blob_store: internal
+    strict_content_validation: true
+  - name: releases
+    type: hosted
+    format: docker
+    http_port: 8094
+    v1_enabled: false
+    write_policy: allow_once
+    blob_store: releases
+    strict_content_validation: true
+  - name: pypi-internal
+    type: hosted
+    format: pypi
+    write_policy: allow_once
+    blob_store: pypi-internal
+    strict_content_validation: true
+  - name: pypi-central
+    type: proxy
+    format: pypi
+    remote_url: https://pypi.python.org/
+    blob_store: pypi-upstream
+  - name: npm-releases
+    type: hosted
+    format: npm
+    write_policy: allow_once
+    blob_store: npm-releases
+    strict_content_validation: true
+  - name: npm-central
+    type: proxy
+    format: npm
+    remote_url: https://registry.npm.org
+    blob_store: npm-upstream
+  - name: maven-snapshots
+    type: hosted
+    format: maven2
+    write_policy: allow
+    version_policy: snapshot
+    layout_policy: strict
+    blob_store: default
+    strict_content_validation: true
+  - name: maven-releases
+    type: hosted
+    format: maven2
+    write_policy: allow_once
+    version_policy: release
+    layout_policy: strict
+    blob_store: default
+    strict_content_validation: true
+  - name: maven-central
+    type: proxy
+    format: maven2
+    blob_store: default
+    version_policy: release
+    layout_policy: strict
+    remote_url: https://repo1.maven.org/maven2/
+  - name: gradle-plugins
+    type: proxy
+    format: maven2
+    blob_store: default
+    version_policy: release
+    layout_policy: strict
+    remote_url: https://plugins.gradle.org/m2/
+  - name: jcenter
+    type: proxy
+    format: maven2
+    blob_store: default
+    version_policy: release
+    layout_policy: strict
+    remote_url: https://jcenter.bintray.com/
+  - name: pypi
+    type: group
+    format: pypi
+    blob_store: pypi-group
+    member_repos:
+      - pypi-upstream
+      - pypi-internal
+      - pypi-central
+    strict_content_validation: true
+  - name: npm-group
+    type: group
+    format: npm
+    blob_store: npm-group
+    member_repos:
+      - npm-upstream
+      - npm-releases
+      - npm-central
+    strict_content_validation: true
+  - name: maven-release-group
+    type: group
+    format: maven2
+    blob_store: maven-release
+    member_repos:
+      - maven-releases
+      - maven-central
+      - gradle-plugins
+      - jcenter
+  - name: maven-snapshot-group
+    type: group
+    format: maven2
+    blob_store: maven-snapshot-group
+    member_repos:
+      - maven-snapshots
+      - maven-central
+      - gradle-plugins
+      - jcenter
+  - name: dockerruns
+    format: raw
+    type: hosted
+    write_policy: allow_once
+    blob_store: dockerruns
+    strict_content_validation: false
+  - name: lambdas
+    format: raw
+    type: hosted
+    write_policy: allow_once
+    blob_store: lambdas
+    strict_content_validation: false
 - update_admin_password:
   - new_password: {{ env['NEXUS_ADMIN_PASSWORD']|default('admin123') }}
-- setup_role:
-    - id: dockerruns-ro
-      name: dockerruns-ro
-      description: RO access to the dockerruns repository.
-      privileges:
-        - nx-repository-view-raw-dockerruns-browse
-        - nx-repository-view-raw-dockerruns-read
-    - id: dockerruns-rw
-      name: dockerruns-rw
-      description: RW access to the dockerruns repository.
-      privileges:
-        - nx-repository-view-raw-dockerruns-*
-    - id: lambdas-ro
-      name: lambdas-ro
-      description: RO access to the lambdas repository.
-      privileges:
-        - nx-repository-view-raw-lambdas-browse
-        - nx-repository-view-raw-lambdas-read
-    - id: lambdas-rw
-      name: lambdas-rw
-      description: RW access to the lambdas repository.
-      privileges:
-        - nx-repository-view-raw-lambdas-*
-    - id: internal-docker-rw
-      name: internal-docker-rw
-      description: RW privilege for the internal docker registry.
-      privileges:
-        - nx-repository-view-docker-internal-add
-        - nx-repository-view-docker-internal-browse
-        - nx-repository-view-docker-internal-edit
-        - nx-repository-view-docker-internal-read
-    - id: internal-docker-ro
-      name: internal-docker-ro
-      description: RO access to the internal registry.
-      privileges:
-        - nx-repository-view-docker-internal-browse
-        - nx-repository-view-docker-internal-read
-    - id: releases-docker-rw
-      name: releases-docker-rw
-      description: RW privilege for the releases docker registry.
-      privileges:
-        - nx-repository-view-docker-releases-add
-        - nx-repository-view-docker-releases-browse
-        - nx-repository-view-docker-releases-edit
-        - nx-repository-view-docker-releases-read
-    - id: releases-docker-ro
-      name: releases-docker-ro
-      description: RO access for the releases docker registry.
-      privileges:
-        - nx-repository-view-docker-releases-browse
-        - nx-repository-view-docker-releases-read
-    - id: pypi-rw
-      name: pypi-rw
-      description: RW access to pypi
-      privileges:
-        - nx-repository-view-pypi-*-add
-        - nx-repository-view-pypi-*-browse
-        - nx-repository-view-pypi-*-edit
-        - nx-repository-view-pypi-*-read
-    - id: pypi-ro
-      name: pypi-ro
-      description: RO access to pypi
-      privileges:
-        - nx-repository-view-pypi-*-browse
-        - nx-repository-view-pypi-*-read
-    - id: npm-rw
-      name: npm-rw
-      description: RW access to npm
-      privileges:
-        - nx-repository-view-npm-*-add
-        - nx-repository-view-npm-*-browse
-        - nx-repository-view-npm-*-edit
-        - nx-repository-view-npm-*-read
-    - id: npm-ro
-      name: npm-ro
-      description: RO access to npm
-      privileges:
-        - nx-repository-view-npm-*-browse
-        - nx-repository-view-npm-*-read
-    - id: maven-rw
-      name: maven-rw
-      description: RW access to maven
-      privileges:
-        - nx-repository-view-maven2-*-add
-        - nx-repository-view-maven2-*-browse
-        - nx-repository-view-maven2-*-edit
-        - nx-repository-view-maven2-*-read
-    - id: maven-ro
-      name: maven-ro
-      description: RO access to maven
-      privileges:
-        - nx-repository-view-maven2-*-browse
-        - nx-repository-view-maven2-*-read
-    - id: NexusUsersRO
-      name: NexusUsersRO
-      description: users with RO access to Nexus
-      roles:
-        - lambdas-ro
-        - dockerruns-ro
-        - internal-docker-ro
-        - releases-docker-ro
-        - pypi-ro
-        - npm-ro
-        - maven-ro
-    - id: NexusUsersRW
-      name: NexusUsersRW
-      description: users with RW access to Nexus
-      roles:
-        - lambdas-rw
-        - dockerruns-rw
-        - internal-docker-rw
-        - releases-docker-rw
-        - pypi-rw
-        - npm-rw
-        - maven-rw
+- setup_roles_from_list:
+  - id: dockerruns-ro
+    name: dockerruns-ro
+    description: RO access to the dockerruns repository.
+    privileges:
+      - nx-repository-view-raw-dockerruns-browse
+      - nx-repository-view-raw-dockerruns-read
+  - id: dockerruns-rw
+    name: dockerruns-rw
+    description: RW access to the dockerruns repository.
+    privileges:
+      - nx-repository-view-raw-dockerruns-*
+  - id: lambdas-ro
+    name: lambdas-ro
+    description: RO access to the lambdas repository.
+    privileges:
+      - nx-repository-view-raw-lambdas-browse
+      - nx-repository-view-raw-lambdas-read
+  - id: lambdas-rw
+    name: lambdas-rw
+    description: RW access to the lambdas repository.
+    privileges:
+      - nx-repository-view-raw-lambdas-*
+  - id: internal-docker-rw
+    name: internal-docker-rw
+    description: RW privilege for the internal docker registry.
+    privileges:
+      - nx-repository-view-docker-internal-add
+      - nx-repository-view-docker-internal-browse
+      - nx-repository-view-docker-internal-edit
+      - nx-repository-view-docker-internal-read
+  - id: internal-docker-ro
+    name: internal-docker-ro
+    description: RO access to the internal registry.
+    privileges:
+      - nx-repository-view-docker-internal-browse
+      - nx-repository-view-docker-internal-read
+  - id: releases-docker-rw
+    name: releases-docker-rw
+    description: RW privilege for the releases docker registry.
+    privileges:
+      - nx-repository-view-docker-releases-add
+      - nx-repository-view-docker-releases-browse
+      - nx-repository-view-docker-releases-edit
+      - nx-repository-view-docker-releases-read
+  - id: releases-docker-ro
+    name: releases-docker-ro
+    description: RO access for the releases docker registry.
+    privileges:
+      - nx-repository-view-docker-releases-browse
+      - nx-repository-view-docker-releases-read
+  - id: pypi-rw
+    name: pypi-rw
+    description: RW access to pypi
+    privileges:
+      - nx-repository-view-pypi-*-add
+      - nx-repository-view-pypi-*-browse
+      - nx-repository-view-pypi-*-edit
+      - nx-repository-view-pypi-*-read
+  - id: pypi-ro
+    name: pypi-ro
+    description: RO access to pypi
+    privileges:
+      - nx-repository-view-pypi-*-browse
+      - nx-repository-view-pypi-*-read
+  - id: npm-rw
+    name: npm-rw
+    description: RW access to npm
+    privileges:
+      - nx-repository-view-npm-*-add
+      - nx-repository-view-npm-*-browse
+      - nx-repository-view-npm-*-edit
+      - nx-repository-view-npm-*-read
+  - id: npm-ro
+    name: npm-ro
+    description: RO access to npm
+    privileges:
+      - nx-repository-view-npm-*-browse
+      - nx-repository-view-npm-*-read
+  - id: maven-rw
+    name: maven-rw
+    description: RW access to maven
+    privileges:
+      - nx-repository-view-maven2-*-add
+      - nx-repository-view-maven2-*-browse
+      - nx-repository-view-maven2-*-edit
+      - nx-repository-view-maven2-*-read
+  - id: maven-ro
+    name: maven-ro
+    description: RO access to maven
+    privileges:
+      - nx-repository-view-maven2-*-browse
+      - nx-repository-view-maven2-*-read
+  - id: NexusUsersRO
+    name: NexusUsersRO
+    description: users with RO access to Nexus
+    roles:
+      - lambdas-ro
+      - dockerruns-ro
+      - internal-docker-ro
+      - releases-docker-ro
+      - pypi-ro
+      - npm-ro
+      - maven-ro
+  - id: NexusUsersRW
+    name: NexusUsersRW
+    description: users with RW access to Nexus
+    roles:
+      - lambdas-rw
+      - dockerruns-rw
+      - internal-docker-rw
+      - releases-docker-rw
+      - pypi-rw
+      - npm-rw
+      - maven-rw
+- setup_users_from_list:
+  - username: pypirw
+    first_name: Pypi
+    last_name: readWrite
+    password: "{{ env['NEXUS_PYPIRW_PASSWORD']|default('pypirw') }}"
+    email: pypirw@example.org
+    roles:
+    - pypi-rw
+  - username: multiroleaccess
+    first_name: multirole
+    last_name: access
+    password: "{{ env['NEXUS_MULTIROLEACCESS_PASSWORD']|default('multiroleaccess') }}"
+    email: multiroleaccess@example.org
+    roles:
+    - pypi-rw
+    - NexusUsersRO
+    - maven-rw
+
