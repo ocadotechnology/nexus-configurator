@@ -1,6 +1,6 @@
 #!/bin/sh
 
-release="v2.4.7"
+release="v2.4.11"
 rm -rf nexus3-*
 rm -rf nexus_configurator/groovy
 curl -L https://github.com/ansible-ThoTeam/nexus3-oss/archive/${release}.tar.gz | tar xz
